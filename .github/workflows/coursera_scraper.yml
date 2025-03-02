@@ -1,0 +1,33 @@
+name: Coursera Scraper Automation
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"  # Runs every 6 hours
+  workflow_dispatch: # Allows manual execution
+
+jobs:
+  scrape_and_upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 pandas
+
+      - name: Run Scraper
+        run: python coursera_scraper.py
+
+      - name: Commit and Push Updated CSV
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add Coursera_Certificates.csv
+          git commit -m "Updated Coursera Certificates"
+          git push
