@@ -77,7 +77,7 @@ try:
             df_certificates.at[i, "Provider Logo"] = provider_logo_map.get(provider, "No Logo Available")
 
     # Save to CSV file with UTF-8 encoding
-    csv_filename = r"I:\My Drive\IBM ai product manager\Code\Coursera_Certificates.csv"
+    csv_filename = r"Coursera_Certificates.csv"
     df_certificates.to_csv(csv_filename, index=False, encoding="utf-8")
 
     print(f"✅ Extraction complete! Data saved as: {csv_filename}")
