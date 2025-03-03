@@ -1,44 +1,53 @@
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 import pandas as pd
+import time
 
-# Load the saved Credly HTML file
-html_file = "saved_resource.html"
-with open(html_file, "r", encoding="utf-8") as file:
-    soup = BeautifulSoup(file, "html.parser")
+# Set up Selenium WebDriver
+chrome_options = Options()
+chrome_options.add_argument("--headless")  # Run in background
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--window-size=1920x1080")
+
+# Ensure correct path to your WebDriver
+service = Service("chromedriver.exe")  # Adjust if using EdgeDriver
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
+# Open the Credly public profile
+credly_url = "https://www.credly.com/users/bernadettesmail"
+driver.get(credly_url)
+
+# Wait for JavaScript to load content
+time.sleep(5)  # Adjust if needed
 
 # Extract all badge cards
-badge_cards = soup.find_all("div", {"data-testid": "mobile-badge-stackable-card"})
-
-# List to store extracted data
 certificates = []
+badge_cards = driver.find_elements(By.CSS_SELECTOR, "div[data-testid='mobile-badge-stackable-card']")
 
 for card in badge_cards:
-    # Extract certificate title
-    title_tag = card.find("span", class_="skills-profile__edit-skills-profile__badge-card__badge-name__mobile")
-    title = title_tag.text.strip() if title_tag else "Unknown Title"
+    try:
+        title = card.find_element(By.CSS_SELECTOR, ".skills-profile__edit-skills-profile__badge-card__badge-name__mobile").text
+        issue_date = card.find_element(By.CSS_SELECTOR, ".skills-profile__edit-skills-profile__badge-card__issued-date__mobile").text.replace("Issued ", "")
+        provider = card.find_element(By.CSS_SELECTOR, ".skills-profile__edit-skills-profile__badge-card__issuer-name__mobile").text
+        badge_image = card.find_element(By.TAG_NAME, "img").get_attribute("src")
+        
+        certificates.append({
+            "Title": title,
+            "Provider": provider,
+            "Issue Date": issue_date,
+            "Badge Image": badge_image
+        })
+    except Exception as e:
+        print(f"Skipping one card due to error: {e}")
 
-    # Extract issue date
-    date_tag = card.find("div", class_="skills-profile__edit-skills-profile__badge-card__issued-date__mobile")
-    issue_date = date_tag.text.replace("Issued ", "").strip() if date_tag else "Unknown Date"
-
-    # Extract provider name
-    provider_tag = card.find("div", class_="skills-profile__edit-skills-profile__badge-card__issuer-name__mobile")
-    provider = provider_tag.text.strip() if provider_tag else "Unknown Provider"
-
-    # Extract badge image
-    img_tag = card.find("img")
-    badge_image = img_tag["src"] if img_tag else "No Image"
-
-    # Store the extracted data
-    certificates.append({
-        "Title": title,
-        "Provider": provider,
-        "Issue Date": issue_date,
-        "Badge Image": badge_image
-    })
-
-# Convert to a DataFrame and save as CSV
+# Save extracted data to CSV
 certificates_df = pd.DataFrame(certificates)
-certificates_df.to_csv("Credly_Certificates.csv", index=False, encoding="utf-8")
+csv_filename = "Credly_Certificates.csv"
+certificates_df.to_csv(csv_filename, index=False, encoding="utf-8")
 
-print("✅ Extraction complete! Data saved as Credly_Certificates.csv")
+print(f"✅ Extraction complete! Data saved as {csv_filename}")
+
+# Close the browser
+driver.quit()
