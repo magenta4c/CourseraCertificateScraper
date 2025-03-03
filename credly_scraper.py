@@ -1,47 +1,44 @@
-import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
-def safe_decode(text):
-    try:
-        text = text.encode("latin1").decode("utf-8")
-        text = text.replace("Â", "").replace("Ã", "").strip()
-        return text
-    except (UnicodeEncodeError, UnicodeDecodeError, AttributeError):
-        return text if isinstance(text, str) else "Unknown"
+# Load the saved Credly HTML file
+html_file = "saved_resource.html"
+with open(html_file, "r", encoding="utf-8") as file:
+    soup = BeautifulSoup(file, "html.parser")
 
-def scrape_credly_certificates(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.text, "html.parser")
-        certificates_data = []
+# Extract all badge cards
+badge_cards = soup.find_all("div", {"data-testid": "mobile-badge-stackable-card"})
 
-        for cert in soup.find_all("div", class_="cr-standard-grid-item"):
-            cert_name = cert.find("h3", class_="cr-standard-grid-item__title").text.strip() if cert.find("h3", class_="cr-standard-grid-item__title") else "Unknown"
-            issuer = cert.find("div", class_="cr-standard-grid-item__organization").text.strip() if cert.find("div", class_="cr-standard-grid-item__organization") else "Unknown"
-            issue_date = cert.find("span", class_="cr-standard-grid-item__issue-date").text.strip() if cert.find("span", class_="cr-standard-grid-item__issue-date") else "Unknown"
-            cert_url = cert.find("a", class_="cr-standard-grid-item__cta")["href"] if cert.find("a", class_="cr-standard-grid-item__cta") else "No Link"
-            
-            certificates_data.append({
-                "Certificate Name": safe_decode(cert_name),
-                "Issuer": safe_decode(issuer),
-                "Issue Date": safe_decode(issue_date),
-                "Certificate URL": cert_url
-            })
+# List to store extracted data
+certificates = []
 
-        df_certificates = pd.DataFrame(certificates_data)
-        csv_filename = r"Credly_Certificates.csv"
-        df_certificates.to_csv(csv_filename, index=False, encoding="utf-8")
+for card in badge_cards:
+    # Extract certificate title
+    title_tag = card.find("span", class_="skills-profile__edit-skills-profile__badge-card__badge-name__mobile")
+    title = title_tag.text.strip() if title_tag else "Unknown Title"
 
-        print(f"✅ Credly scraping complete! Data saved as: {csv_filename}")
+    # Extract issue date
+    date_tag = card.find("div", class_="skills-profile__edit-skills-profile__badge-card__issued-date__mobile")
+    issue_date = date_tag.text.replace("Issued ", "").strip() if date_tag else "Unknown Date"
 
-    except requests.exceptions.RequestException as req_err:
-        print(f"❌ Network error: {str(req_err)}")
-    except Exception as e:
-        print(f"❌ An error occurred: {str(e)}")
+    # Extract provider name
+    provider_tag = card.find("div", class_="skills-profile__edit-skills-profile__badge-card__issuer-name__mobile")
+    provider = provider_tag.text.strip() if provider_tag else "Unknown Provider"
 
-if __name__ == "__main__":
-    credly_url = "https://www.credly.com/users/bernadettesmail"
-    scrape_credly_certificates(credly_url)
+    # Extract badge image
+    img_tag = card.find("img")
+    badge_image = img_tag["src"] if img_tag else "No Image"
+
+    # Store the extracted data
+    certificates.append({
+        "Title": title,
+        "Provider": provider,
+        "Issue Date": issue_date,
+        "Badge Image": badge_image
+    })
+
+# Convert to a DataFrame and save as CSV
+certificates_df = pd.DataFrame(certificates)
+certificates_df.to_csv("Credly_Certificates.csv", index=False, encoding="utf-8")
+
+print("✅ Extraction complete! Data saved as Credly_Certificates.csv")
