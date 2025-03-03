@@ -22,7 +22,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests beautifulsoup4 pandas
+          pip install requests beautifulsoup4 pandas selenium
+
+      - name: Set up Chrome WebDriver (for Selenium)
+        run: |
+          sudo apt update
+          sudo apt install -y unzip
+          wget -q https://chromedriver.storage.googleapis.com/$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip
+          unzip chromedriver_linux64.zip
+          sudo mv chromedriver /usr/local/bin/
+          chmod +x /usr/local/bin/chromedriver
 
       - name: Run Coursera Scraper
         run: python coursera_scraper.py
@@ -30,7 +39,11 @@ jobs:
       - name: Run Credly Scraper
         run: python credly_scraper.py
 
-      - name: Commit and Push Updated CSVs
+      - name: Check if CSVs Changed
+        run: |
+          git diff --quiet Coursera_Certificates.csv Credly_Certificates.csv || echo "Changes detected"
+
+      - name: Commit and Push Updated CSVs (If Changed)
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
