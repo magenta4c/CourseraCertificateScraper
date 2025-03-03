@@ -43,11 +43,13 @@ for card in badge_cards:
         provider = card.find_element(By.CSS_SELECTOR, ".skills-profile__edit-skills-profile__badge-card__issuer-name__mobile").text
         badge_image = card.find_element(By.TAG_NAME, "img").get_attribute("src")
 
-        certificates.append({
-            "Title": title,
+    certificates.append({
+     "Course Name": course_name,
             "Provider": provider,
-            "Issue Date": issue_date,
-            "Badge Image": badge_image
+            "Date": issue_date,
+            "Certificate Link": cert_link,
+            "Provider Logo": badge_image,
+            "Categories": categories
         })
     except Exception as e:
         print(f"Skipping one card due to error: {e}")
