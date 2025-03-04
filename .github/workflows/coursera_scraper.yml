@@ -22,29 +22,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests beautifulsoup4 pandas selenium
-
-      - name: Set up Chrome WebDriver (for Selenium)
-        run: |
-          sudo apt update
-          sudo apt install -y unzip
-          wget -q https://chromedriver.storage.googleapis.com/$(curl -sS https://chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/
-          chmod +x /usr/local/bin/chromedriver
+          pip install requests beautifulsoup4 pandas
 
       - name: Run Coursera Scraper
         run: python coursera_scraper.py
 
-    
-      - name: Check if CSVs Changed
+      - name: Check if CSV Changed
         run: |
-          git diff --quiet Coursera_Certificates.csv Credly_Certificates.csv || echo "Changes detected"
+          git diff --quiet Coursera_Certificates.csv || echo "Changes detected"
 
-      - name: Commit and Push Updated CSVs (If Changed)
+      - name: Commit and Push Updated CSV (If Changed)
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
-          git add Coursera_Certificates.csv Credly_Certificates.csv
-          git diff --quiet && git diff --staged --quiet || git commit -m "Updated Certificates"
+          git add Coursera_Certificates.csv
+          git diff --quiet && git diff --staged --quiet || git commit -m "Updated Coursera Certificates"
           git push
