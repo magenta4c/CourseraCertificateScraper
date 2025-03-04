@@ -36,9 +36,7 @@ jobs:
       - name: Run Coursera Scraper
         run: python coursera_scraper.py
 
-      - name: Run Credly Scraper
-        run: python credly_scraper.py
-
+    
       - name: Check if CSVs Changed
         run: |
           git diff --quiet Coursera_Certificates.csv Credly_Certificates.csv || echo "Changes detected"
